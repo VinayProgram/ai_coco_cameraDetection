@@ -41,7 +41,7 @@ const App = () => {
   React.useEffect(() => {
     const interval = setInterval(() => {
       detectObjects();
-    }, 100);
+    }, 1);
 
     // Clean up interval when the component is unmounted
     return () => clearInterval(interval);
@@ -49,28 +49,18 @@ const App = () => {
 
   return (
     <div>
-      <section id="demos" className="invisible">
-        <p>
-          Hold some objects up close to your webcam to get a real-time
-          classification! When ready, click "Enable Webcam" below and accept
-          access to the webcam when the browser asks (check the top left of your
-          window).
-        </p>
-
-        <div id="liveView" className="webcam">
-          <button id="webcamButton" onClick={enableCam}>
+      <video ref={videoRef} id="webcam" autoPlay  style={{width:'100vw',height:'100vh'}}/>
+      <button style={{display:'flex',position:'absolute',top:'0px'}} id="webcamButton" onClick={enableCam}>
             Enable Webcam
           </button>
-          <video ref={videoRef} id="webcam" autoPlay  />
           
-          {/* Render bounding boxes and labels */}
           {predictions.map((prediction, index) => (
             prediction.score > 0.66 ? (
-              <div key={index} style={{ position: 'absolute', left: prediction.bbox[0], top: prediction.bbox[1], width: prediction.bbox[2], height: prediction.bbox[3] }}>
+              <div key={index} style={{ position: 'absolute', left: prediction.bbox[0], top: prediction.bbox[1], width: '3em', height: '3rem' }}>
                 <div
                   className="highlighter"
                   style={{
-                    position: 'absolute',
+                    position: 'relative',
                     left: prediction.bbox[0],
                     top: prediction.bbox[1],
                     width: prediction.bbox[2],
@@ -96,9 +86,8 @@ const App = () => {
               </div>
             ) : null
           ))}
+
         </div>
-      </section>
-    </div>
   );
 };
 
