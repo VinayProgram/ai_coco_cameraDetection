@@ -5,11 +5,13 @@ import CameraComponent from './logic-componets/camera-component';
 import GestureRecognizerComponent from './logic-componets/gesture-recognize-component';
 import '@tensorflow/tfjs-backend-cpu';
 import '@tensorflow/tfjs-backend-webgl';
+import Editor from './3d-components/editor';
+import { useStore } from './3d-components/store';
 
 const App: React.FC = () => {
   const [gestureRecognizer, setGestureRecognizer] = useState<GestureRecognizer | null>(null);
   const [detectedGesture, setDetectedGesture] = useState<string | null>(null);
-  
+      const {setCameraDirection,setwristDirection}=useStore()
   const handleFrame = useCallback(
     async (video: HTMLVideoElement) => {
       if (gestureRecognizer) {
@@ -43,7 +45,8 @@ const App: React.FC = () => {
     const x = indexFingerTip[8].x * innerWidth;
     const y = indexFingerTip[8].y * innerHeight;
     // console.log(x, y);
-
+    setwristDirection([indexFingerTip[0].x,indexFingerTip[0].y,indexFingerTip[0].z])
+    setCameraDirection([indexFingerTip[8].x,indexFingerTip[8].y,indexFingerTip[8].z])
     // Move a custom cursor element to the calculated position
     const cursor = document.getElementById("custom-cursor");
     if (cursor) {
@@ -91,6 +94,7 @@ const App: React.FC = () => {
   return (
     <div>
       <GestureRecognizerComponent setGestureRecognizer={setGestureRecognizer} />
+      <Editor/>
       {gestureRecognizer && <CameraComponent onFrame={handleFrame} />}
     </div>
   );
