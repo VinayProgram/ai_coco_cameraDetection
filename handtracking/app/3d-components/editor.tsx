@@ -25,7 +25,7 @@ const Editor = () => {
       const direction = cameraPos.clone().normalize()
 
       // Ensure the distance is between MIN_DISTANCE and MAX_DISTANCE
-      const distance = Math.max(MIN_DISTANCE, Math.min(cameraPos.length(), cameraPos.z))
+      const distance = Math.max(MIN_DISTANCE, Math.min(cameraPos.length(), MAX_DISTANCE))
       
       // Set the direction of the camera without changing its Z position
       const newPos = direction.multiplyScalar(distance)
