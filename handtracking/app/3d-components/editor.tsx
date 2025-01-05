@@ -1,34 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { useStore } from './store'
+import { useGLTF } from '@react-three/drei'
 import { PerspectiveCamera } from '@react-three/drei'
 import { OrbitControls } from '@react-three/drei'
-import { Camera, Vector3 } from 'three'
+import { Vector3, Euler, Camera } from 'three'
+import { useStore } from './store'
 
 const Editor = () => {
   const { cameraDirection } = useStore()
   const cameraRef = useRef<Camera | null>(null)
 
-  const MIN_DISTANCE = 5 // Minimum distance from the object
-  const MAX_DISTANCE = 20 // Maximum distance from the object
-  const SMOOTHING = 0.1 // Smoothness factor for camera movement
+  const MIN_DISTANCE = 5
+  const MAX_DISTANCE = 20
+  const SMOOTHING = 0.1
 
   const [smoothCameraPos, setSmoothCameraPos] = useState(new Vector3(...cameraDirection))
 
-  // Update camera position based on cameraDirection from handPosition
+  // Load the .glb file using useGLTF hook
+  const { scene } = useGLTF('/model.glb') // Replace with your actual file path
+
   useEffect(() => {
     if (cameraRef.current) {
-      // Create a Vector3 to represent the camera position
-      const cameraPos = new Vector3(...cameraDirection)
-
-      // Get the direction vector from the camera to the origin (or object position)
+      const cameraPos = new Vector3(...cameraDirection).multiply(new Vector3(...cameraDirection)).multiply(new Vector3(...cameraDirection))
       const direction = cameraPos.clone().normalize()
 
-      // Calculate the new position by scaling the direction with the desired distance
-      const distance = Math.max(MIN_DISTANCE, Math.min(cameraPos.length(), MAX_DISTANCE))
+      // Ensure the distance is between MIN_DISTANCE and MAX_DISTANCE
+      const distance = Math.max(MIN_DISTANCE, Math.min(cameraPos.length(), cameraPos.z))
+      
+      // Set the direction of the camera without changing its Z position
       const newPos = direction.multiplyScalar(distance)
 
-      // Smoothly interpolate the camera position
+      // Apply Euler rotation: rotate the camera around both the X and Y axes
+      const euler = new Euler(Math.PI / direction.x, Math.PI / direction.y, 0) // 15 degrees around X-axis and 30 degrees around Y-axis
+      
+      newPos.applyEuler(euler)
+
+      // Smooth the camera's movement using lerpVectors
       setSmoothCameraPos((prevPos) => {
         const smoothedPos = new Vector3().lerpVectors(prevPos, newPos, SMOOTHING)
         return smoothedPos
@@ -38,7 +45,6 @@ const Editor = () => {
 
   useEffect(() => {
     if (cameraRef.current) {
-      // Apply the smoothed camera position
       cameraRef.current.position.copy(smoothCameraPos)
     }
   }, [smoothCameraPos])
@@ -46,12 +52,23 @@ const Editor = () => {
   return (
     <Canvas style={{ position: 'absolute' }}>
       <ambientLight intensity={2} />
-      <PerspectiveCamera ref={cameraRef} fov={75} position={smoothCameraPos.toArray()} makeDefault />
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color={'orange'} />
-      </mesh>
-      <OrbitControls />
+      
+      {/* Perspective Camera */}
+      <PerspectiveCamera
+        ref={cameraRef}
+        fov={75}
+        
+        position={smoothCameraPos.toArray()}
+        makeDefault
+        near={0.1}
+        far={1000}
+      />
+
+      {/* OrbitControls for rotating the camera */}
+      <OrbitControls target={[0, 0, 0]} enableDamping={true} dampingFactor={0.25} />
+
+      {/* Render the .glb model */}
+      <primitive object={scene} scale={1} position={[0, 0, 0]} />
     </Canvas>
   )
 }
